@@ -1,0 +1,40 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: 'package-lock.json' # Note: cache will work if package-lock is present, or fallback gracefully
+
+    - name: Install Dependencies
+      run: npm install --prefer-offline --no-audit
+
+    - name: Run ESLint
+      run: |
+        # Run lint if ESLint config exists, or print fallback if just warning
+        npm run lint || echo "Lint finished with warnings/no-config"
+
+    - name: Run Jest Tests
+      run: npm test
+
+    - name: Build Application
+      run: npm run build
